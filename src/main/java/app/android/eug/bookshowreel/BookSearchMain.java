@@ -82,6 +82,114 @@ public class BookSearchMain extends ActionBarActivity {
 
     }
 
+    private class FetchBookInfo extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+            StringBuilder strBuilder = new StringBuilder();
+            for(String bookItem : params) {
+                HttpClient fetchClient = new DefaultHttpClient();
+                try {
+                    HttpGet getBook = new HttpGet(bookItem);
+                    HttpResponse bookFetchState = fetchClient.execute(getBook);
+                    StatusLine bookFetchStatus = bookFetchState.getStatusLine();
+
+                    if(bookFetchStatus.getStatusCode() == 200 ) { /* HTTP OK */
+                        HttpEntity bookEntity = bookFetchState.getEntity();
+                        InputStream bookContent = bookEntity.getContent();
+                        InputStreamReader bookInput = new InputStreamReader(bookContent);
+                        BufferedReader bookReader = new BufferedReader(bookInput);
+                        String lineIn;
+                        while ((lineIn=bookReader.readLine())!=null) {
+                            strBuilder.append(lineIn);
+                        }
+                    }
+
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            String s = strBuilder.toString();
+            return strBuilder.toString();
+        }
+
+        protected void onPostExecute(String result) {
+            try {
+                JSONObject resultObject = new JSONObject(result);
+                JSONArray bookArray = resultObject.getJSONArray("items");
+                JSONObject bookObject;// = bookArray.getJSONObject(0);
+                JSONObject volumeObject;// = bookObject.getJSONObject("volumeInfo");
+
+
+                //Log.d("SEARCH_RESULT", "items fetched: " + bookArray.length());
+                Toast.makeText(BookSearchMain.this, "Items fetched: " + bookArray.length(), Toast.LENGTH_SHORT).show();
+
+                //int len = bookArray.length() > 2 ? 2 : bookArray.length();
+                int len = bookArray.length();
+                // allocate resources
+                bookText = new String[len];
+
+                for(int i = 0; i < len; i++) {
+                    bookObject = bookArray.getJSONObject(i);
+                    volumeObject = bookObject.getJSONObject("volumeInfo");
+                    StringBuilder entryText = new StringBuilder();
+                    // now build the text to display
+
+                    // title
+                    entryText.append("TITLE: " + volumeObject.getString("title") + "\n");
+                    // authors
+                    try {
+                        StringBuilder authorStringBuilder = new StringBuilder();
+                        JSONArray bookAuthors = volumeObject.getJSONArray("authors");
+                        for(int j = 0; j < bookAuthors.length(); j++) {
+                            if(j > 0) {authorStringBuilder.append(", ");}
+                            authorStringBuilder.append(bookAuthors.getString(j));
+                        }
+
+                        // finally set the text
+                        entryText.append("\nBook Authors: " + authorStringBuilder.toString());
+                    } catch (Exception e) {e.printStackTrace();}
+
+                    // publication date
+                    try{entryText.append("\nPUBLISHED: " + volumeObject.getString("publishedDate"));}
+                    catch(JSONException jse) {jse.printStackTrace();}
+
+                    // description
+                    try{entryText.append("\nDESCRIPTION: " + volumeObject.getString("description"));}
+                    catch(JSONException jse) {jse.printStackTrace();}
+
+                    // get the thumbnails
+                    try{
+                        JSONObject jsonImageInfo = volumeObject.getJSONObject("imageLinks");
+                        FetchBookThumb imgThumb = new FetchBookThumb();
+                        imgThumb.execute(jsonImageInfo.getString("smallThumbnail"), Integer.toString(i));
+                        imgThumb.get(500, TimeUnit.MILLISECONDS);
+                    } catch(JSONException jse) {jse.printStackTrace();}
+
+                    // finally add the string.
+                    bookText[i] = entryText.toString();
+                }
+
+
+                CustomImageGrid adapter = new CustomImageGrid(BookSearchMain.this, bookText, thumbnails);
+                imageGridView =(GridView)findViewById(R.id.grid);
+                imageGridView.setAdapter(adapter);
+                imageGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view,
+                                            int position, long id) {
+                        Toast.makeText(BookSearchMain.this, "You Clicked at " + bookText[+position], Toast.LENGTH_SHORT).show();
+
+
+                    }
+                });
+
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private class FetchBookThumb extends AsyncTask<String, Void, String> {
 
