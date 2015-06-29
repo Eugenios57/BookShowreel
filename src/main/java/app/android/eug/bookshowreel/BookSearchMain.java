@@ -69,7 +69,9 @@ public class BookSearchMain extends ActionBarActivity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 Toast.makeText(getBaseContext(), query, Toast.LENGTH_SHORT).show();
+
                 new FetchBookInfo().execute(basicQueryString + query + actualKey);
+
                 return false;
             }
 
@@ -236,8 +238,6 @@ public class BookSearchMain extends ActionBarActivity {
             //TODO show the result
         }
     }
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
