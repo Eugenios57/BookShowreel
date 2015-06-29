@@ -83,6 +83,34 @@ public class BookSearchMain extends ActionBarActivity {
     }
 
 
+    private class FetchBookThumb extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            try {
+                URL thumbnailURI = new URL(params[0]);
+                URLConnection conn = thumbnailURI.openConnection();
+                conn.connect();
+                InputStream inStream = conn.getInputStream();
+                BufferedInputStream bufInStream = new BufferedInputStream(inStream);
+
+                thumbnails[Integer.parseInt(params[1])] = BitmapFactory.decodeStream(bufInStream);
+
+                bufInStream.close();
+                inStream.close();
+            } catch(Exception e) {
+                Log.d("TAG_EXCEPTION", e.toString());
+            }
+            return "";
+        }
+
+        protected void onPostExecute(String result) {
+            //TODO show the result
+        }
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
