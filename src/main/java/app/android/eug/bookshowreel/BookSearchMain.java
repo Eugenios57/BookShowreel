@@ -80,6 +80,25 @@ public class BookSearchMain extends ActionBarActivity {
             }
         });
 
+        if(savedInstanceState != null) {
+            thumbnails = (Bitmap[])savedInstanceState.getParcelableArray("thumbnails");
+            bookText = savedInstanceState.getStringArray("entryText");
+            // redraw it
+            CustomImageGrid adapter = new CustomImageGrid(BookSearchMain.this, bookText, thumbnails);
+            imageGridView =(GridView)findViewById(R.id.grid);
+            imageGridView.setAdapter(adapter);
+            imageGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view,
+                                        int position, long id) {
+                    Toast.makeText(BookSearchMain.this, "You Clicked at " + bookText[+position], Toast.LENGTH_SHORT).show();
+
+
+                }
+            });
+        }
+
     }
 
     private class FetchBookInfo extends AsyncTask<String, Void, String> {
@@ -240,5 +259,10 @@ public class BookSearchMain extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void saveInstanceState(Bundle saveBundle) {
+        saveBundle.putStringArray("entryText", bookText);
+        saveBundle.putParcelableArray("thumbnails", thumbnails);
     }
 }
